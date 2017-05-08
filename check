@@ -1,3 +1,4 @@
+
 #!/usr/bin/env ruby
 
 require_relative "azure-blobstore-concourse-resource-common"
@@ -17,16 +18,14 @@ requested_path = version_key ? version_key["path"] : nil
 check_source
 
 azure_response = azure_cli("list #{@container}")
-files = azure_response.map {|f| f['name']}
-matched_files = files.select {|f| f.match @regexp}
+matched_files = azure_response.select {|f| f['name'].match @regexp}
+matched_files.reject! { |f| !f.has_key? 'snapshot' }
 
 names_and_versions = matched_files.map do |f|
-  version = f.match(@regexp)[1]
-  { "filename" => f, "version" => version  }
+  { "filename" => f['name'], "version" => f['snapshot']  }
 end
 
-names_and_versions.reject! { |h| h["version"].match(/[^0-9\.]/) }
-names_and_versions.sort! { |a,b| Gem::Version.new(a["version"]) <=> Gem::Version.new(b["version"])  }
+names_and_versions.sort! { |a,b| a["version"] <=> b["version"] }
 
 if requested_path.nil?
   # return latest

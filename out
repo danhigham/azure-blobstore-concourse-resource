@@ -40,9 +40,11 @@ else
   dst_path = File.basename(src_file)
 end
 
-response = azure_cli("upload --quiet --container #{@container} --blob #{dst_path} --file #{src_file}")
+azure_cli("upload --quiet --container #{@container} --blob #{dst_path} --file #{src_file}")
+response = azure_cli("snapshot --container #{@container} --blob #{dst_path}")
+
 metadata = []
 response.each_pair {|k,v| metadata << {"name"=> k.to_s, "value"=>v.to_s }  }
-puts JSON.dump({ "version" => { "path" => dst_path },
+puts JSON.dump({ "version" => { "path" => dst_path, "snapshot" => response['snapshot'] },
                  "metadata" => metadata
                 })
